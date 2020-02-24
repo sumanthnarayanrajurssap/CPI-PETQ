@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Suite">
+	<test name="Test">
+		<!-- <parameter name="compareTeamName" value="prism"/>
+		<parameter name="comparePurpose" value="RT"/>
+		<parameter name="teamName" value="prism"/>
+		<parameter name="purpose" value="forTheMemes"/>
+		<parameter name="tmnName" value="prt2pw10tmn"/>
+		<parameter name="providerSubAccountID" value="avtprsm"/>
+		<parameter name="ENABLEJVMPROFILING" value="false"/>
+		<parameter name="ENABLESUPA" value="true"/>
+		<parameter name="ListOfPackages" value=""/>
+		<parameter name="ListOfIflows" value=""/>
+		<parameter name="URL" value="https://prt2pw10-tmn.hci.int.sap.hana.ondemand.com/itspaces"/>
+		<parameter name="INVOCATIONCOUNT" value="1"/>
+		<parameter name="driverOption" value="chrome"/>
+		<parameter name="USERNAME" value=""/>
+		<parameter name="PASSWORD" value=""/>  -->
+		<!-- 
+		 <parameter name="USERNAME" value=""/>
+		<parameter name="PASSWORD" value=""/>
+		<parameter name="driverOption" value="chrome"/>
+		<parameter name="RESPONSETIMEPATH" value="C:\test\"/>D:\\selenium\\UIperformance\\ResponseTimeLogs\\
+		<parameter name="configFilePath" value="C:\supa\timezone1.properties"/>
+		<parameter name="ENABLEJVMPROFILING" value="false"/>
+		<parameter name="ENABLESUPA" value="true"/>
+		<parameter name="ListOfPackages" value="UIPerformanceSelenium"/>
+		<parameter name="ListOfIflows" value="ContentBasedRouter_MultipleInterfaces_small_iflow"/>
+		<parameter name="INVOCATIONCOUNT" value="1"/>-->
+		
+		
+		
+		<classes>
+			<class name="com.prism.UIPerf.framework.Prism_OpenIflowProject"/>
+		</classes>
+	</test> <!-- Test -->
+</suite> <!-- Suite -->

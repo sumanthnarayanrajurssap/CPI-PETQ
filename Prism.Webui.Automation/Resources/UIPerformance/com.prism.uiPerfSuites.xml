@@ -1,0 +1,10 @@
+<suite name="UI PERFORMANCE SUITES" parallel="classes" thread-count="1" configfailurepolicy="continue" verbose="10">
+  <test name="UI PERF - STANDARD iFLOWS,ODP,VM,LARGE RESOURCE">
+    <classes>
+    <class name="com.prism.UIPerf.framework.Prism_OpenIflowProject"/>
+    <class name="com.prism.UIPerf.framework.Prism_Scenario_OpeniFlow_ODP"/>
+    <class name="com.prism.UIPerf.framework.Prism_Value_Mapping"/>
+    <class name="com.prism.UIPerf.framework.Prism_Resource_File"/>
+    </classes>
+  </test>
+</suite>
