@@ -20,7 +20,7 @@ public class Prism_Value_Mapping extends Prism_Selenium_Loginlogout{
 			perf.analyzeData();
 		}
 		catch(Exception e) {
-			throw new Exception(e.getMessage()+"\nTerminating the job...\n");
+			throw e;
 		}
 		finally {
 			perf.shutdownServer();

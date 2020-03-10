@@ -2,17 +2,20 @@ package com.prism.xpath.constants;
 
 public interface LoginXpathConstants {
 	
-	final String CHROMEINITIALIZECOMMAND = "webdriver.chrome.driver";
-    final String CHROMEDRIVERLOCATION = "./chromedriver_win32/chromedriver.exe";
-    final String CHROME = "chrome";
-    final String DEFAULTPOPUPSETTING = "profile.default_content_settings.popups";
-    final String SAFEBROWSING = "safebrowsing.enabled";
-    final String PREFS = "prefs";
-    final String TESTTYPE = "--test-type";
-    final String DISABLEEXT = "--disable-extensions";
-    final String DIABLEINFOBAR = "--disable-infobars";
-    final String CHROMESWITCHKEY = "chrome.switches";
-    final String CHROMESWITCHVALUE = "--disable-translate";
-    final String INCOGNITO = "--incognito";
-    
+	public static final String CHROMEINITIALIZECOMMAND = "webdriver.chrome.driver";
+	public static final String CHROMEDRIVERLOCATION = "./chromedriver_win32/chromedriver.exe";
+	public static final String CHROME = "chrome";
+	public static final String DEFAULTPOPUPSETTING = "profile.default_content_settings.popups";
+	public static final String SAFEBROWSING = "safebrowsing.enabled";
+	public static final String PREFS = "prefs";
+	public static final String TESTTYPE = "--test-type";
+	public static final String DISABLEEXT = "--disable-extensions";
+	public static final String DIABLEINFOBAR = "--disable-infobars";
+	public static final String CHROMESWITCHKEY = "chrome.switches";
+	public static final String CHROMESWITCHVALUE = "--disable-translate";
+	public static final String INCOGNITO = "--incognito";
+	public static final String HANACLOUDTITLE = "//*[@id='shell--toolHeader']//child::*[text()='SAP Cloud Platform Integration']";
+	public static final String USERNAME = "//input[(@placeholder='Email') or contains(@placeholder,'E-Mail')]";
+	public static final String PASSWORD = "//input[contains(@placeholder,'Password')]";
+	public static final String LOGON = "//button[text()='Log On'] | //input[@value='Log On']";
 }

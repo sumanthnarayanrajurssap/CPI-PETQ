@@ -2,12 +2,12 @@ package com.prism.UIPerf.framework;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,35 +15,25 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClients;
-
 import com.sap.nw.performance.supa.automation.Supa;
 import au.com.bytecode.opencsv.CSVReader;
 
 public class Prism_SUPAFramework extends Supa{
-	public FileUtils csvWrite;
-	public String SUPAResultsStoreFile = "resultsSUPA.csv";
-	public String allInOneSummaryLevel0FileRelativePath = "latestResult\\allInOneLevel0_Summary.csv";
-	public String csvExtn = ".csv";
-	String grafanaURL;
-	String landscape;
-	private HttpClient httpClient = HttpClients.createDefault();
-	String comparePurpose;
+	private FileUtils csvWrite;
+	
+	private String allInOneSummaryLevel0FileRelativePath = 
+			"latestResult\\allInOneLevel0_Summary.csv";
+	private String csvExtn = ".csv";
+	private String grafanaURL;
+	private String landscape;
+	private String comparePurpose;
 	private String nodeAssemblyVersion;
 	private double[] baselineActions;
 	
-	public Prism_SUPAFramework(String configFile) throws Exception {
+	Prism_SUPAFramework(String[] configFile) throws Exception {
 		super(configFile);
 	}
-	public Prism_SUPAFramework(String[] configFile) throws Exception {
-		super(configFile);
-	}
-	public boolean writeToDirectory() {
+	boolean writeToDirectory() {
 		try {
 				System.out.println("SUPA result dir = "+this.getResultDirectory());
 				this.writeExcelReport();
@@ -54,9 +44,8 @@ public class Prism_SUPAFramework extends Supa{
 		}
 		return true;
 	}
-	
-	
 
+	@Override
 	public void startMeasurement(String stepNameOverride) {
 		try {
 			super.startMeasurement(stepNameOverride);
@@ -72,17 +61,23 @@ public class Prism_SUPAFramework extends Supa{
 		}
 	}
 	
-	public Map<String,String> stopMeasurement(double timeInSecondsOverride) throws Exception {
+	@Override
+	public Map<String,String> stopMeasurement(
+			double timeInSecondsOverride) {
 		try {
 			return super.stopMeasurement(timeInSecondsOverride);
 		} catch (Exception e) {
-			resetDataProviders();
+			try {
+				resetDataProviders();
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
 			e.printStackTrace();
 			return null;
 		}
 	}
 	
-	public void copySUPAResultsToSharedFolder(String commonPath) {
+	void copySUPAResultsToSharedFolder(String commonPath) {
 		try {
 			Process p = Runtime.getRuntime().exec(new String[]{"cmd.exe", "/c", "%CD%\\Resources\\UIPerformance\\BatchFiles\\moveLatestSupaFile.bat "+commonPath});
 			p.waitFor();
@@ -95,12 +90,21 @@ public class Prism_SUPAFramework extends Supa{
 			e.printStackTrace();
 		}
 	}
-	/**
-	 * Author i334474
-	 * @param commonPath
-	 * @throws IOException
-	 */
-	public void storeResults(int noA,int NumberOfIflows, int SizeOfExcel, String commonPathGUID, String commonPath,String grafanaURL,String landscape,String comparePurpose,String variant,String nodeAssemblyVersion,String []listOfActions,double[]baselineActions) throws Exception {
+	
+	void storeResults(
+			int noA,
+			int NumberOfIflows, 
+			int SizeOfExcel, 
+			String commonPathGUID, 
+			String commonPath,
+			String grafanaURL,
+			String landscape,
+			String comparePurpose,
+			String variant,
+			String nodeAssemblyVersion,
+			String []listOfActions,
+			double[]baselineActions) {
+		
 		csvWrite = new FileUtils();
 		this.grafanaURL = grafanaURL;
 		this.landscape = landscape;
@@ -108,36 +112,48 @@ public class Prism_SUPAFramework extends Supa{
 		this.nodeAssemblyVersion = nodeAssemblyVersion;
 		this.baselineActions = baselineActions;
 		File results = new File(commonPathGUID+allInOneSummaryLevel0FileRelativePath);
-		CSVReader resultsReader = new au.com.bytecode.opencsv.CSVReader(new FileReader(results),',');
-		List<String[]> resultsList = resultsReader.readAll();
-		resultsReader.close();
 		try {
-			writeIntoFile(noA,NumberOfIflows, SizeOfExcel,resultsList,commonPath,variant,listOfActions);
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			throw new Exception("\nFailed during storing the results\n"+e.getMessage());
+			CSVReader resultsReader = new au.com.bytecode.opencsv.CSVReader(
+					new FileReader(results),',');
+			List<String[]> resultsList = resultsReader.readAll();
+			resultsReader.close();
+			writeIntoFile(
+					noA,
+					NumberOfIflows, 
+					SizeOfExcel,
+					resultsList,
+					commonPath,
+					variant,
+					listOfActions);
+		} catch (IOException e1) {
+			e1.printStackTrace();
 		}
 	}
 	
-	/**
-	 * Author i334474
-	 * @param resultsList
-	 * @param commonPath
-	 * @throws NumberFormatException
-	 * @throws IOException
-	 */
-	private void writeIntoFile(int noA,int NumberOfIflows,int SizeOfExcel, List<String[]> resultsList,String commonPath,String variant,String[] listOfActions) throws NumberFormatException, IOException {
-		FileWriter writer;
+	private void writeIntoFile(
+			int noA,
+			int NumberOfIflows,
+			int SizeOfExcel, List<String[]> resultsList,
+			String commonPath,
+			String variant,
+			String[] listOfActions) {
+		FileWriter writer = null;
 		int noI;
 		noI = NumberOfIflows;
 		int actions = 0;
 		List<String> values;
 		for(int i=3,j=0;i<(SizeOfExcel);i+=(noI*noA+1),j++) {
-			writer = new FileWriter(commonPath+UIPerfConstants.ListOfKPIs[j]+csvExtn,true);
+			try {
+				writer = new FileWriter(
+						commonPath+UIPerfConstants.ListOfKPIs[j]+csvExtn,
+						true);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			values = new ArrayList<String>();
 			for(int k=0;k<noA;k++) {
-				double sum = 0,avg=0;
+				double sum = 0;
+				double avg=0;
 				noI = NumberOfIflows;
 				for(int l=0;l<noI*noA;l+=noA) {
 					if(resultsList.get(1)[l+i+k].isEmpty()) {
@@ -149,106 +165,69 @@ public class Prism_SUPAFramework extends Supa{
 				}
 				avg = sum/noI;
 				values.add(""+avg);
-				System.out.println("Pushing results to Grafana...........................................");
-				pushAggregatedSUPAResultsToGrafana(avg,UIPerfConstants.ListOfKPIs[j],variant,listOfActions[actions],baselineActions[actions]);
+				GrafanaReport pushintoInfluxDB = new GrafanaReport();
+				pushintoInfluxDB.pushAggregatedSUPAResultsToGrafana(
+						avg,
+						UIPerfConstants.ListOfKPIs[j],
+						variant,
+						listOfActions[actions],
+						baselineActions[actions],
+						landscape,
+						nodeAssemblyVersion,
+						comparePurpose,
+						grafanaURL
+								);
 				actions++;
 			}
-			csvWrite.writeLine(writer, values);
-			writer.flush();
-			writer.close();
+			try {
+				csvWrite.writeLine(writer, values);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			try {
+				writer.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			try {
+				writer.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			actions = 0;
 		}
 	}
 	
-	private void pushAggregatedSUPAResultsToGrafana(double aggregatedValue, String KPI, String variant,String action,double baselineValue) {
-		try {
-			sendAggregatedValuesToGrafana(aggregatedValue,KPI,variant,action,baselineValue);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	 private void sendAggregatedValuesToGrafana(double aggregatedValue,String KPI,String variant,String action,double baselineValue)
-			throws IOException, ClientProtocolException {
-		 if(KPI.equals("EndToEndResponseTimesS")) {
-			String baselinePayload =KPI+"_baseline"+","+"transaction="+action.replaceAll("\\s", "")+","+"variant="+variant+","+"landscape="+landscape+","+"testType="+"SingleUser"+","+"nodeAssemblyVersion="+nodeAssemblyVersion+","+"category="+comparePurpose+" "+"value="+String.valueOf(baselineValue);	
-		    System.out.println(baselinePayload);
-			pushToInflux(baselinePayload);
-		 }
-			 String payload =KPI+","+"transaction="+action.replaceAll("\\s", "")+","+"variant="+variant+","+"landscape="+landscape+","+"testType="+"SingleUser"+","+"nodeAssemblyVersion="+nodeAssemblyVersion+","+"category="+comparePurpose+" "+"value="+String.valueOf(aggregatedValue);
-	    pushToInflux(payload);
-	}
-
-	 private HttpResponse pushToInflux(String payload)
-			throws UnsupportedEncodingException, IOException, ClientProtocolException {
-		HttpPost httpPost = new HttpPost(grafanaURL);
-		httpPost.addHeader("Content-Type","text/xml");
-		StringEntity entity = new StringEntity(payload);
-		httpPost.setEntity(entity);
-		HttpResponse response = httpClient.execute(httpPost);
-		return response;
-	}
-	/**
-	 * Author i334474
-	 * @param teamName
-	 * @param purpose
-	 * @param commonPath
-	 * @param targetTeamName
-	 * @param targetPurpose
-	 * @return false if regression, true if okay
-	 * @throws IOException
-	 */
-	public boolean compareResults(String [] ActionList,String teamName, String purpose, String commonPath,String targetTeamName,String targetPurpose) throws IOException {
-		if(targetTeamName.contentEquals(teamName)&&targetPurpose.contentEquals(purpose)) {
-			return compareWithItself(ActionList ,teamName, purpose, commonPath);
+	boolean compareResults(
+			String [] ActionList,
+			String teamName, 
+			String purpose, 
+			String commonPath,
+			String targetTeamName,
+			String targetPurpose
+			) {
+		if(targetTeamName
+				.contentEquals(teamName)
+				&&targetPurpose
+				.contentEquals(purpose)) {
+			return compareWithItself(
+					ActionList ,
+					teamName, 
+					purpose, 
+					commonPath);
 		}
 		else {
-			return compareWithRT(ActionList, teamName, purpose, commonPath, targetTeamName, targetPurpose);
+			return compareWithRT(
+					ActionList, 
+					teamName, 
+					purpose, 
+					commonPath, 
+					targetTeamName, 
+					targetPurpose);
 		}
-	}
-	/**s
-	 * 
-	 * @param ActionList
-	 * @param teamName
-	 * @param purpose
-	 * @param commonPath
-	 * @return
-	 * @throws IOException 
-	 */
-	public boolean compareResultsWithBaseline(
-			String [] ActionList,
-			String teamName, 
-			String purpose, 
-			String commonPath, 
-			double[] baseline
-			) throws IOException {
-		if(baseline!=null) {
-			boolean KPIsMet= true;
-			String rtResults = commonPath+"\\"+teamName+"\\"+purpose+"\\";
-			System.out.println("comparing with itself= "+rtResults);
-			File rtFile = new File(rtResults+UIPerfConstants.ListOfKPIs[0]+csvExtn);
-			CSVReader rtReader = new au.com.bytecode.opencsv.CSVReader(new FileReader(rtFile),',');
-			List<String[]> rtList = rtReader.readAll();
-			rtReader.close();
-			int rtReading = rtList.size()-1;
-			double[] current= new double[ActionList.length];// = {Float.parseFloat(snapshotList.get(snapshotReading)[0]),Float.parseFloat(rtList.get(rtReading)[1]),Float.parseFloat(snapshotList.get(snapshotReading)[2])};
-			for(int i=0;i<ActionList.length;i++) {
-				current[i] = Float.parseFloat(rtList.get(rtReading)[i]);
-				if(compareResult(baseline[i],current[i])) {
-					regression(baseline[i],current[i],ActionList[i]);
-					KPIsMet= false;
-				}
-				else if (current[i]<baseline[i]) {
-					improvement(ActionList[i]);
-				}
-			}
-			displayResultsBaseline(baseline,current,ActionList);
-			return KPIsMet;
-		}
-		return true;
 	}
 	
-	public boolean compareResultsWithBaselineReadings(
+	boolean compareResultsWithBaseline(
 			String [] ActionList,
 			String teamName, 
 			String purpose, 
@@ -260,7 +239,8 @@ public class Prism_SUPAFramework extends Supa{
 			String rtResults = commonPath+"\\"+teamName+"\\"+purpose+"\\";
 			System.out.println("comparing with itself= "+rtResults);
 			File rtFile = new File(rtResults+UIPerfConstants.ListOfKPIs[0]+csvExtn);
-			CSVReader rtReader = new au.com.bytecode.opencsv.CSVReader(new FileReader(rtFile),',');
+			CSVReader rtReader = new au.com.bytecode.opencsv.CSVReader(
+					new FileReader(rtFile),',');
 			List<String[]> rtList = rtReader.readAll();
 			rtReader.close();
 			int rtReading = rtList.size()-1;
@@ -280,64 +260,117 @@ public class Prism_SUPAFramework extends Supa{
 		}
 		return true;
 	}
-	/**
-	 * Author i334474
-	 * @param teamName
-	 * @param purpose
-	 * @param commonPath
-	 * @return false if regression, true if okay
-	 * @throws IOException 
-	 */
-	private boolean compareWithItself(String [] ActionList, String teamName, String purpose, String commonPath) throws IOException {
+	
+	
+	
+	private boolean compareWithItself(
+			String [] ActionList, 
+			String teamName, 
+			String purpose, 
+			String commonPath
+			) {
 		String rtResults = commonPath+"\\"+teamName+"\\"+purpose+"\\";
 		File rtFile = new File(rtResults+UIPerfConstants.ListOfKPIs[0]+csvExtn);
-		CSVReader rtReader = new au.com.bytecode.opencsv.CSVReader(new FileReader(rtFile),',');
-		List<String[]> rtList = rtReader.readAll();
-		rtReader.close();
+		CSVReader rtReader = null;
+		try {
+			rtReader = new au.com.bytecode.opencsv.CSVReader(new FileReader(rtFile),',');
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+		}
+		List<String[]> rtList = null;
+		try {
+			rtList = rtReader.readAll();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			rtReader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		int rtReading = rtList.size()-2;
 		int snapshotReading = rtList.size()-1;
-		return comparePreviousAndCurrent(ActionList, rtList, rtList, rtReading, snapshotReading);
+		return comparePreviousAndCurrent(
+				ActionList, 
+				rtList, 
+				rtList, 
+				rtReading, 
+				snapshotReading
+				);
 	}
 	
-	/**
-	 * Author i334474
-	 * @param teamName
-	 * @param purpose
-	 * @param commonPath
-	 * @param targetTeamName
-	 * @param targetPurpose
-	 * @return false if regression, true if okay
-	 * @throws IOException
-	 */
-	public boolean compareWithRT(String [] ActionList, String teamName, String purpose, String commonPath,String targetTeamName, String targetPurpose) throws IOException {
+	private boolean compareWithRT(
+			String [] ActionList, 
+			String teamName, 
+			String purpose, 
+			String commonPath,
+			String targetTeamName, 
+			String targetPurpose) {
+		
 		String rtResults;
 		rtResults = commonPath+"\\"+targetTeamName+"\\"+targetPurpose+"\\";
 		String resultsToCompare = commonPath+"\\"+teamName+"\\"+purpose+"\\";
-		File snapshotFile = new File(resultsToCompare+UIPerfConstants.ListOfKPIs[0]+csvExtn);
-		File rtFile = new File(rtResults+UIPerfConstants.ListOfKPIs[0]+csvExtn);
-		CSVReader rtReader = new au.com.bytecode.opencsv.CSVReader(new FileReader(rtFile),',');
-		CSVReader snapshotReader = new au.com.bytecode.opencsv.CSVReader(new FileReader(snapshotFile),',');
-		List<String[]> rtList = rtReader.readAll();
-		List<String[]> snapshotList = snapshotReader.readAll();
-		rtReader.close();
-		snapshotReader.close();
+		File snapshotFile = new File(
+				resultsToCompare+UIPerfConstants.ListOfKPIs[0]+csvExtn);
+		File rtFile = new File(
+				rtResults+UIPerfConstants.ListOfKPIs[0]+csvExtn);
+		CSVReader rtReader = null;
+		try {
+			rtReader = new au.com.bytecode.opencsv.CSVReader(
+					new FileReader(rtFile),',');
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+		}
+		CSVReader snapshotReader = null;
+		try {
+			snapshotReader = new au.com.bytecode.opencsv.CSVReader(
+					new FileReader(snapshotFile),',');
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+		}
+		List<String[]> rtList = null;
+		try {
+			rtList = rtReader.readAll();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		List<String[]> snapshotList = null;
+		try {
+			snapshotList = snapshotReader.readAll();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			rtReader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			snapshotReader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		int rtReading = rtList.size()-1;
 		int snapshotReading = snapshotList.size()-1;
-		return comparePreviousAndCurrent(ActionList, rtList,snapshotList, rtReading, snapshotReading);
+		return comparePreviousAndCurrent(
+				ActionList, 
+				rtList,
+				snapshotList, 
+				rtReading, 
+				snapshotReading
+				);
 	}
-	/**
-	 * 
-	 * @param rtList
-	 * @param snapshotList
-	 * @param rtReading
-	 * @param snapshotReading
-	 * @return false if regression, true if okay
-	 */
-	private boolean comparePreviousAndCurrent(String [] ActionList, List<String[]> rtList, List<String[]> snapshotList, int rtReading,
+
+	private boolean comparePreviousAndCurrent(
+			String [] ActionList, 
+			List<String[]> rtList, 
+			List<String[]> snapshotList, 
+			int rtReading,
 			int snapshotReading) {
+		
 		boolean KPIsMet= true;
-		double[] previous= new double[ActionList.length];// = {Float.parseFloat(rtList.get(rtReading)[0]),Float.parseFloat(rtList.get(rtReading)[1]),Float.parseFloat(rtList.get(rtReading)[2])};
-		double[] current= new double[ActionList.length];// = {Float.parseFloat(snapshotList.get(snapshotReading)[0]),Float.parseFloat(rtList.get(rtReading)[1]),Float.parseFloat(snapshotList.get(snapshotReading)[2])};
+		double[] previous= new double[ActionList.length];
+		double[] current= new double[ActionList.length];
 		for(int i=0;i<ActionList.length;i++) {
 			previous[i] = Float.parseFloat(rtList.get(rtReading)[i]);
 			current[i] = Float.parseFloat(snapshotList.get(snapshotReading)[i]);
@@ -355,58 +388,79 @@ public class Prism_SUPAFramework extends Supa{
 	
 	private void regression(double f, double g, String string) {
 		System.out.println("\n\n");
-		System.out.println("*****                               "+(g-f)*100/f+"% regression                                               *****\n".toUpperCase());
-		System.out.println("                                    Regression in "+string+"                                          \n".toUpperCase());
-		System.out.println("***********************************************************************************\n\n");
+		System.out.println("*****            "
+				+ "                   "+(g-f)*100/f+"% regression         "
+						+ "          "
+						+ "                  "
+						+ "          *****\n".toUpperCase());
+		System.out.println("                    "
+				+ "                Regression in "+string+"           "
+						+ "           "
+						+ "                    \n".toUpperCase());
+		System.out.println("***************"
+				+ "**************************"
+				+ "***********************************"
+				+ "*******\n\n");
 	}
 	
-	private void displayResults(double[] previous, double[] current, String[] ActionList) {
-		System.out.println("\n\n**                                         Previous Readings                                                 **\n\n");
+	private void displayResults(
+			double[] previous, 
+			double[] current, 
+			String[] ActionList) {
+		System.out.println("\n\n**                   "
+				+ "                      "
+				+ "Previous Readings                       "
+				+ "                          "
+				+ "**\n\n");
 		displayResults(previous,ActionList);
-		System.out.println("\n\n**                                         Current Readings                                            **\n\n");
+		System.out.println("\n\n**                        "
+				+ "                 "
+				+ "Current Readings                        "
+				+ "                    "
+				+ "**\n\n");
 		displayResults(current,ActionList);
 	}
 	
-	private void displayResultsBaseline(double[] previous, double[] current, String[] ActionList) {
-		System.out.println("\n\n**                                         Baseline Readings                                            **\n\n");
+	private void displayResultsBaseline(
+			double[] previous, 
+			double[] current, 
+			String[] ActionList) {
+		System.out.println("\n\n**                  "
+				+ "                       "
+				+ "Baseline Readings                      "
+				+ "                      "
+				+ "**\n\n");
 		displayResults(previous,ActionList);
-		System.out.println("\n\n**                                         Current Readings                                            **\n\n");
+		System.out.println("\n\n**                        "
+				+ "                 "
+				+ "Current Readings                      "
+				+ "                      "
+				+ "**\n\n");
 		displayResults(current,ActionList);
 	}
 	
 	private void displayResults(double[] previous,String[] ActionList) {
 		for(int i=0; i<previous.length;i++) {
-			System.out.println(" **                                     "+ActionList[i]+" = "+previous[i]+"                                       **  ");
+			System.out.println(" "
+					+ "**                                     "
+					+ ""+ActionList[i]+" = "+previous[i]+"                                       "
+							+ "**  ");
 		}
 	}
-	/**
-	 * Author: i334474
-	 * @param teamName
-	 * @param purpose
-	 * @param commonPath
-	 * @return true if regression, false if everything is okay.
-	 * @throws IOException
-	 */
-	public boolean compareResult(double initial, double current) {
-		return (current<=initial*UIPerfConstants.RegressionThreshold)?false:true;//((current-initial)<=0)?false:((((current-initial)/initial)<=0.1)?false:true); 
+	
+	private boolean compareResult(double initial, double current) {
+		return (current<=initial*UIPerfConstants.RegressionThreshold)?false:true; 
 	}
-	public void archiveResults(String path,long id) {
-		try {
-			Process p = Runtime.getRuntime().exec(new String[]{"cmd.exe", "/c", "%CD%\\Resources\\UIPerformance\\BatchFiles\\archiveLatestResult.bat "+id+"\\"+path+" "});
-			p.waitFor();
-			BufferedReader reader=new BufferedReader(new InputStreamReader(p.getInputStream())); 
-            String line; 
-            while((line = reader.readLine()) != null) { 
-                System.out.println(line);
-            }
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-	}
+	
 	public static void changeproxySettings() {
 		try {
-			Process p = Runtime.getRuntime().exec(new String[]{"cmd.exe", "/c", "%CD%\\Resources\\UIPerformance\\BatchFiles\\ResetProxySettings.bat"});
+			Process p = Runtime
+					.getRuntime()
+					.exec(
+							new String[]{
+									"cmd.exe", 
+									"/c", 
+									"%CD%\\Resources\\UIPerformance\\BatchFiles\\ResetProxySettings.bat"});
 			p.waitFor(3, TimeUnit.SECONDS);
 			BufferedReader reader=new BufferedReader(new InputStreamReader(p.getInputStream())); 
             String line; 
@@ -418,36 +472,62 @@ public class Prism_SUPAFramework extends Supa{
 		}
 		
 	}
-	public void regression() {
-		System.out.println("---------------------------------------------------------------------------------------------------------------");
+	
+	void regression() {
+		System.out.println(""
+				+ "-------------------------------------"
+				+ "---------------------------------------"
+				+ "-----------------------------------");
 		System.out.println("-----                                                                                                     -----");
-		System.out.println("---------------------------------Regression exists. Need to run JVM profiling.---------------------------------");
+		System.out.println(""
+				+ "---------------------------------"
+				+ "Regression exists. Need to run JVM profiling."
+				+ "---------------------------------");
 		System.out.println("-----                                                                                                     -----");
-		System.out.println("---------------------------------------------------------------------------------------------------------------");
-	}
-	public void noRegression() {
-		System.out.println("---------------------------------------------------------------------------------------------------------------");
-		System.out.println("-----                                                                                                     -----");
-		System.out.println("-------------------------------------------No Regression, KPIs met.--------------------------------------------");
-		System.out.println("-----                                                                                                     -----");
-		System.out.println("---------------------------------------------------------------------------------------------------------------");
-	}
-	public void improvement(String KPI) {
-		System.out.println("---------------------------------------------------------------------------------------------------------------");
-		System.out.println("-----                                                                                                     -----");
-		System.out.println("------------------------------------Improvement found in "+KPI+"---------------------------------------");
-		System.out.println("-----                                                                                                     -----");
-		System.out.println("---------------------------------------------------------------------------------------------------------------");
+		System.out.println("---------------------------"
+				+ "--------------------------------------"
+				+ "----------------------------------------------");
 	}
 	
-	public void analyzeClientLogs(String path, String[] listOfActions) {
+	void noRegression() {
+		System.out.println("-----------------------"
+				+ "-----------------------------------"
+				+ "---------------------------------------"
+				+ "--------------");
+		System.out.println("-----                                                                                                     -----");
+		System.out.println("-------------------------"
+				+ "------------------No Regression, KPIs met.------------"
+				+ "--------------------------------");
+		System.out.println("-----                                                                                                     -----");
+		System.out.println("---------------------------"
+				+ "---------------------------------------------"
+				+ "---------------------------------------");
+	}
+	
+	private void improvement(String KPI) {
+		System.out.println("-------------------------"
+				+ "-------------------------------------"
+				+ "-------------------------------------------------");
+		System.out.println("-----                                                                                                     -----");
+		System.out.println("-------------------------------"
+				+ "-----Improvement found in "+KPI+"----------------"
+						+ "-----------------------");
+		System.out.println("-----                                                                                                     -----");
+		System.out.println("--------------------------------"
+				+ "-----------------------------------------------------"
+				+ "--------------------------");
+	}
+	
+	void analyzeClientLogs(String path, String[] listOfActions) {
 		int noA = listOfActions.length;
 		List<String> proxyTrcEntries = new ArrayList<String>();
 		proxyTrcEntries= getDataFromProxyTrcFile(path);
 		Map<String,Integer> roundtrips = new HashMap<String,Integer>();
 		Map<String,Integer> roundtripsDetailed = new HashMap<String,Integer>();
 		String httpCallType=null;
-		int i=-1,j=0,p=0;
+		int i=-1;
+		int j=0;
+		int p=0;
 		boolean newAction = true;
 		for(String proxyEntry: proxyTrcEntries) {
 			if(proxyEntry.contains("#####") && newAction) {
@@ -468,7 +548,12 @@ public class Prism_SUPAFramework extends Supa{
 				String httpAddress = httpCall.split(" ")[1];
 				httpCallType = returnhttpCallType(httpAddress);
 				searchAndAddEntries(listOfActions,roundtrips, roundtripsDetailed,httpCallType,i,j);
-				addEntriesToFile(listOfActions[i].replaceAll(" ", "")+((j==0)?"WithoutCache":"WithCache"),path, httpMethod, httpAddress,httpCallType);
+				addEntriesToFile(
+						listOfActions[i].replaceAll(" ", "")+((j==0)?"WithoutCache":"WithCache"),
+						path, 
+						httpMethod, 
+						httpAddress,
+						httpCallType);
 			}
 		}
 		for (Map.Entry<String,Integer> entry : roundtrips.entrySet()) {
@@ -484,7 +569,13 @@ public class Prism_SUPAFramework extends Supa{
 		}
 	}
 
-	private void searchAndAddEntries(String [] listOfActions, Map<String, Integer> roundtrips, Map<String, Integer> roundtripsDetailed, String httpCallType, int i, int j) {
+	private void searchAndAddEntries(
+			String [] listOfActions, 
+			Map<String, Integer> roundtrips, 
+			Map<String, Integer> roundtripsDetailed, 
+			String httpCallType, 
+			int i, 
+			int j) {
 		String key = listOfActions[i]+ ((j==0)?" Without Cache ":" With Cache ")+ httpCallType;
 		searchAndAddEntry(roundtripsDetailed, key);
 		key = listOfActions[i]+ ((j==0)?" Without Cache ":" With Cache ");
@@ -500,7 +591,13 @@ public class Prism_SUPAFramework extends Supa{
 		}	
 	}
 	
-	private void addEntriesToFile(String action, String path, String httpMethod, String httpAddress,String httpCallType) {
+	private void addEntriesToFile(
+			String action, 
+			String path, 
+			String httpMethod, 
+			String httpAddress,
+			String httpCallType) {
+		
 		try {
 			File currentCall = new File(path+"\\"+httpCallType+action+".csv");
 			FileWriter currentCallWriter = new FileWriter(currentCall, true);

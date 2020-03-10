@@ -21,7 +21,7 @@ import com.webui.Design.automation.Prism_Design_Page;
 import com.webui.Others.webui.tooling.Prism_Master_Class;
 import com.webui.Others.webui.tooling.Prism_Selenium_Loginlogout;
 
-public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
+class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 	
 	
 	private int errorCount=0;
@@ -57,16 +57,16 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 	private String pathForUseDirGUID;
 	private String pathForUseGUID;
 	private UIPerfConstants ExcelCompute;
-	public String[] PackageList;
-	public String[] IflowList;
-	public int numberOfIflows;
-	public int SizeOfExcel;
+	private String[] PackageList;
+	private String[] IflowList;
+	private int numberOfIflows;
+	private int SizeOfExcel;
 	private String homePath;
 	private List<String> problemIflows;
 	private String nodeAssemblyVersion;
 	private String grafanaURL;
 	
-	public static enum ExecutionType {
+	static enum ExecutionType {
 	    UIPerf, ODP,  ValueMapping, OpenResource, OPenMessageMapping , ODP2, LargeContentModifier;
 	}
 	private void setTestVariables(
@@ -134,7 +134,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 											exec.name().contentEquals("ODP2")?UIPerfConstants.NumberOfActions_ODP2:
 												UIPerfConstants.NumberOfActions_LContnModifier);
 	}
-	public UIPerformanceBase
+	UIPerformanceBase
 	(
 			WebDriver driver, 
 			ExecutionType exec, 
@@ -200,7 +200,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 
 	}
 	
-	public void initialProcess() {
+	void initialProcess() {
 		try {
             apifwk.createTeamPurposeDirectories(pathForUseGUID);
             if(ENABLESUPA) {
@@ -215,15 +215,11 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
         }
 	}
 	
-	public void startSupaServer() {
+	void startSupaServer() {
 		if(ENABLESUPA) {
             for (int i = 0; i < 10; i++) {
-                try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
                 try{
+                	Thread.sleep(1000);
                     supa = new Prism_SUPAFramework(getSupaConfig(UIPerfConstants.__SUPA_PATH));
                     supa.setLogLevel(Level.ALL);
                     break;
@@ -238,7 +234,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
         else supa= null;
 	}
 	
-	public void measurePerformance() {
+	void measurePerformance() {
 		int i=0;
 		problemIflows= new ArrayList<String>();
 		do {
@@ -251,15 +247,13 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		}while(i<numberOfIflows);
 	}
 	
-	public void collectData() throws Exception {
-		try {
-			computeResponseTimeStats(INVOCATIONCOUNT);
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
+	void collectData()  {
 		if(ENABLESUPA) {
-			supa.setEnabled(true);
+			try {
+				supa.setEnabled(true);
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
 			try {
 				supa.finish();
 				supa.uploadResultNew(IPAProject,exec.name()+"-"+comparePurpose, branch, nodeAssemblyVersion, "SingleUserTests", null, "i045359","Pgw5");		//Upload Results to IPA
@@ -301,7 +295,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		}
 	}
 
-	public void analyzeData() throws IOException {
+	void analyzeData() throws IOException {
 		if(ENABLESUPA) {
 			if(compareTeamName.contentEquals("") && comparePurpose.contentEquals("")) {
 				compareTeamName = "prism";
@@ -445,7 +439,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		}
 	}
 	
-	public void shutdownServer() {
+	void shutdownServer() {
 		if(ENABLESUPA) {
 			try{
 				supa.shutdownServer();
@@ -468,21 +462,10 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 				measureVM(PACKAGENAME,IFLOWNAME);
 			else if(exec.name().contentEquals("OpenResource"))
 				measureResource(PACKAGENAME, IFLOWNAME);
-			else if(exec.name().contentEquals("OPenMessageMapping"))
-				measureMessageMappng(PACKAGENAME, IFLOWNAME);
 			else if(exec.name().contentEquals("ODP2"))
 				measureODP2(PACKAGENAME,IFLOWNAME);
 			else
 				measureLargeContentModifier(PACKAGENAME, IFLOWNAME);
-	}
-	
-	private void computeResponseTimeStats(int INVOCATIONCOUNT)  {
-		try {
-			csvwrite = new FileUtils();
-			csvwrite.frequencyDistributionTest(pathForUseGUID,INVOCATIONCOUNT,numberOfActions);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 	
 	private void measureUIPerf(String PACKAGENAME, String IFLOWNAME) {
@@ -518,11 +501,6 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		}
 		if(!iflowWorking) {
 			errorCount2++;
-			try {
-				throw new Exception("Problem in iflow "+ IFLOWNAME);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 		}
 		if(errorFlag) {
 			errorCount++;
@@ -541,7 +519,6 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 				saveIflow_VM(IFLOWNAME);
 				deployIflow_VM(IFLOWNAME);
 				writeResponses(PACKAGENAME, IFLOWNAME,i);
-				navigateBack_VM();
 			}
 			catch(Exception e) {
 				e.printStackTrace();
@@ -565,29 +542,6 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 				uiResponseTimes = new ArrayList<>();
 				openIFLOW(PACKAGENAME,IFLOWNAME);
 				OpenresourceFile("CompoundEmployeeEntityquerySync0");
-				writeResponses(PACKAGENAME, IFLOWNAME,i);
-			}catch(Exception e) {
-				e.printStackTrace();
-				try {
-					supa.resetDataProviders();
-				} catch (Exception e3) {
-					e3.printStackTrace();
-				}
-			}
-			try {
-				cleanTenant(IFLOWNAME);
-			}catch(Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	private void measureMessageMappng(String PACKAGENAME, String IFLOWNAME) {
-		for(int i=0;i<INVOCATIONCOUNT;i++) {
-			try {
-				uiResponseTimes = new ArrayList<>();
-				openIFLOW(PACKAGENAME,IFLOWNAME);
-				OpenresourceMessageMapping("CompoundEmployeeEntityquerySync0");
 				writeResponses(PACKAGENAME, IFLOWNAME,i);
 			}catch(Exception e) {
 				e.printStackTrace();
@@ -696,7 +650,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		pDesign.editODP();
 	}
 	
-	private void deployODP() throws Exception {
+	private void deployODP() {
 		pDesign = new Prism_Design_Page(driver);
 		pOthers = new Prism_Design_Others(driver);
 		if(supa!=null) {
@@ -705,15 +659,15 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		uiResponseTimes.add(4,pOthers.deploy(false));
 		if(supa!=null) {
 			try {
-				supa.stopMeasurement(1/*uiResponseTimes.get(4)/1000+10*/);
+				supa.stopMeasurement(1);
 			}
 			catch (Exception e) {
-				throw new Exception(e.getMessage()+"\nProblem in saving ODP project\n");
+				throw e;
 			}
 		}
 	}
 	
-	private void deployODP2() throws Exception {
+	private void deployODP2() {
 		pDesign = new Prism_Design_Page(driver);
 		pOthers = new Prism_Design_Others(driver);
 		if(supa!=null) {
@@ -722,10 +676,10 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		uiResponseTimes.add(5,pOthers.deploy(false));
 		if(supa!=null) {
 			try {
-				supa.stopMeasurement(1/*uiResponseTimes.get(5)/1000+10*/);
+				supa.stopMeasurement(1);
 			}
 			catch (Exception e) {
-				throw new Exception(e.getMessage()+"\nProblem in saving ODP project\n");
+				throw e;
 			}
 		}
 	}
@@ -735,12 +689,12 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		uiResponseTimes.add(0,pDesign.prism_UIPerf_OpenODP(URL,PACKAGENAME,IFLOWNAME,supa,ENABLEJVMPROFILING));
 	}
 	
-	private void openODPProject2(String PACKAGENAME, String IFLOWNAME) throws Exception{
+	private void openODPProject2(String PACKAGENAME, String IFLOWNAME){
 		pDesign = new Prism_Design_Page(driver);
 		uiResponseTimes.add(0,pDesign.prism_UIPerf_OpenODP(URL,PACKAGENAME,IFLOWNAME,supa,ENABLEJVMPROFILING));
 	}
 	
-	private void saveODP() throws Exception {
+	private void saveODP() {
 		pOthers = new Prism_Design_Others(driver);
 		if(supa!=null) {
 			supa.startMeasurement("saveODPProject");
@@ -748,7 +702,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		uiResponseTimes.add(3,pOthers.save(false));
 		if(supa!=null) {
 			try {
-				supa.stopMeasurement(1/*uiResponseTimes.get(3)/1000+10*/);
+				supa.stopMeasurement(1);
 			}
 			catch (Exception e) {
 				e.printStackTrace();
@@ -756,7 +710,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		}
 	}
 	
-	private void saveODP2() throws Exception {
+	private void saveODP2() {
 		pDesign = new Prism_Design_Page(driver);
 		pOthers = new Prism_Design_Others(driver);
 		if(supa!=null) {
@@ -768,12 +722,12 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 				supa.stopMeasurement(1/*uiResponseTimes.get(4)/1000+10*/);
 			}
 			catch (Exception e) {
-				throw new Exception(e.getMessage()+"\nProblem in saving ODP project\n");
+				throw e;
 			}
 		}
 	}
 	
-	private void saveODPIflow() throws Exception {
+	private void saveODPIflow() {
 		Prism_Master_Class masterClass = new Prism_Master_Class(driver);
 		pDesign = new Prism_Design_Page(driver);
 		if(supa!=null) {
@@ -797,7 +751,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		waitUntilLoadingCompletes(UIPerfConstants.timeout);
 	}
 	
-	private void saveODPIflow2() throws Exception {
+	private void saveODPIflow2() {
 		pDesign = new Prism_Design_Page(driver);
 		if(supa!=null) {
 			supa.startMeasurement("SaveODPIflow");
@@ -809,15 +763,15 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		uiResponseTimes.add(2,stop-start);
 		if(supa!=null) {
 			try {
-				supa.stopMeasurement(1/*uiResponseTimes.get(2)/1000+10*/);
+				supa.stopMeasurement(1);
 			}
 			catch (Exception e) {
-				throw new Exception(e.getMessage()+"\nProblem in saving iflow:\nTask set Update\n");
+				throw e;
 			}
 		}
 	}
 	
-	private void cancelODPiFlow() throws Exception{
+	private void cancelODPiFlow(){
 		pDesign = new Prism_Design_Page(driver);
 		if(supa!=null) {
 			supa.startMeasurement("cancelODPIflow");
@@ -829,10 +783,10 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		uiResponseTimes.add(3,stop-start);
 		if(supa!=null) {
 			try {
-				supa.stopMeasurement(1/*uiResponseTimes.get(3)/1000+10*/);
+				supa.stopMeasurement(1);
 			}
 			catch (Exception e) {
-				throw new Exception(e.getMessage()+"\nProblem in saving iflow:\nTask set Update\n");
+				throw e;
 			}
 		}
 	}
@@ -856,7 +810,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		}
 	}
 	
-	private void openODPIflow2() throws Exception{
+	private void openODPIflow2() {
 		pDesign = new Prism_Design_Page(driver);
 		if(supa!=null) {
 			supa.startMeasurement("OpenODPIflow");
@@ -868,15 +822,15 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		uiResponseTimes.add(1,stop-start);
 		if(supa!=null) {
 			try {
-				supa.stopMeasurement(1/*uiResponseTimes.get(1)/1000+10*/);
+				supa.stopMeasurement(1);
 			}
 			catch (Exception e) {
-				throw new Exception(e.getMessage()+"\nProblem in opening iflow:\nTask set Update\n");
+				throw e;
 			}
 		}
 	}
 	
-	public void waitUntilLoadingCompletes(int timeout) {
+	private void waitUntilLoadingCompletes(int timeout) {
 		Wait<WebDriver> wait = new FluentWait<WebDriver>(driver)
 				.withTimeout(Duration.ofSeconds(timeout))
 				.pollingEvery(Duration.ofMillis(100))
@@ -890,7 +844,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		pDesign.prism_design_close_all_popups(URL);
 	}
 	
-	private void deployIflow(String IFLOWNAME) throws Exception {
+	private void deployIflow(String IFLOWNAME) {
 		pOthers = new Prism_Design_Others(driver);
 		if(supa!=null) {
 			supa.startMeasurement("DeployIflowTime"+IFLOWNAME);
@@ -898,15 +852,15 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		uiResponseTimes.add(3,pOthers.deploy(ENABLEJVMPROFILING));
 		if(supa!=null) {
 			try {
-				supa.stopMeasurement(1/*uiResponseTimes.get(3)/1000+10*/);
+				supa.stopMeasurement(1);
 			}
 			catch (Exception e) {
-				throw new Exception(e.getMessage()+"\nProblem in deploying iflow:\n"+IFLOWNAME);
+				throw e;
 			}
 		}
 	}
 	
-	private void deployIflow_VM(String IFLOWNAME) throws Exception {
+	private void deployIflow_VM(String IFLOWNAME) {
 		pOthers = new Prism_Design_Others(driver);
 		if(supa!=null) {
 			supa.startMeasurement("DeployIflowTime"+IFLOWNAME);
@@ -914,15 +868,15 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		uiResponseTimes.add(2,pOthers.deploy_VM(ENABLEJVMPROFILING));
 		if(supa!=null) {
 			try {
-				supa.stopMeasurement(1/*uiResponseTimes.get(2)/1000+10*/);
+				supa.stopMeasurement(1);
 			}
 			catch (Exception e) {
-				throw new Exception(e.getMessage()+"\nProblem in deploying iflow:\n"+IFLOWNAME);
+				throw e;
 			}
 		}
 	}
 	
-	private void navigateBack_VM() throws Exception {
+	private void navigateBack_VM()  {
 		Prism_Master_Class masterClass = new Prism_Master_Class(driver);
 		try {
 			masterClass.sleep(2000);
@@ -934,7 +888,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		}
 	}
 	
-	private void saveIflow(String IFLOWNAME) throws Exception {
+	private void saveIflow(String IFLOWNAME)  {
 		pOthers = new Prism_Design_Others(driver);
 		if(supa!=null) {
 			supa.startMeasurement("SaveIflowTime"+IFLOWNAME);
@@ -942,15 +896,15 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		uiResponseTimes.add(2,pOthers.save(ENABLEJVMPROFILING));
 		if(supa!=null) {
 			try {
-				supa.stopMeasurement(1/*(uiResponseTimes.get(2))/1000+10*/);
+				supa.stopMeasurement(1);
 			}
 			catch (Exception e) {
-				throw new Exception(e.getMessage()+"\nProblem in saving iflow"+IFLOWNAME);
+				throw e;
 			}
 		}
 	}
 	
-	private void saveIflow_VM(String IFLOWNAME) throws Exception {
+	private void saveIflow_VM(String IFLOWNAME)  {
 		pOthers = new Prism_Design_Others(driver);
 		if(supa!=null) {
 			supa.startMeasurement("SaveIflowTime"+IFLOWNAME);
@@ -958,26 +912,25 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		uiResponseTimes.add(1,pOthers.save(ENABLEJVMPROFILING));
 		if(supa!=null) {
 			try {
-				supa.stopMeasurement(1/*(uiResponseTimes.get(1))/1000+10*/);
+				supa.stopMeasurement(1);
 			}
 			catch (Exception e) {
-				throw new Exception(e.getMessage()+"\nProblem in saving iflow"+IFLOWNAME);
-			}
+				throw e;			}
 		}
 	}
 	
 	
-	private void openIFLOW(String PACKAGENAME, String IFLOWNAME) throws Exception {
+	private void openIFLOW(String PACKAGENAME, String IFLOWNAME)  {
 		pDesign = new Prism_Design_Page(driver);
 		uiResponseTimes.add(0,pDesign.prism_UIPerf_OpenIflow(URL,PACKAGENAME,IFLOWNAME,supa,ENABLEJVMPROFILING));
 	}
 	
-	private void openIFLOW_VM(String PACKAGENAME, String IFLOWNAME) throws Exception {
+	private void openIFLOW_VM(String PACKAGENAME, String IFLOWNAME)  {
 		pDesign = new Prism_Design_Page(driver);
 		uiResponseTimes.add(0,pDesign.prism_UIPerf_OpenIflow_VM(URL,PACKAGENAME,IFLOWNAME,supa,ENABLEJVMPROFILING));
 	}
 	
-	private void editDirtyBitChange(String IFLOWNAME) throws Exception {
+	private void editDirtyBitChange(String IFLOWNAME)  {
 		clickEditOpenIflow(IFLOWNAME);
 	 //	dirtyBitChange();
 	}
@@ -1017,7 +970,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		System.out.println("Status of the VM Delete : "+valuemappingDeletestatus.toUpperCase());
 	}*/
 	
-	private void clickEditOpenIflow(String IFLOWNAME) throws Exception {
+	private void clickEditOpenIflow(String IFLOWNAME)  {
 		pDesign = new Prism_Design_Page(driver);
 		if(supa!=null) {
 			supa.startMeasurement("EditIflowTime"+IFLOWNAME);
@@ -1025,10 +978,10 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		uiResponseTimes.add(1,pDesign.clickEdit());
 		if(supa!=null) {
 			try {
-				supa.stopMeasurement(1/*(uiResponseTimes.get(1))/1000+10*/);
+				supa.stopMeasurement(1);
 			}
 			catch (Exception e) {
-				throw new Exception(e.getMessage()+"\nProblem in Edit iflow"+IFLOWNAME);
+				throw e;
 			}
 		}
 	}
@@ -1051,12 +1004,8 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
             writer2.close();
             writer.flush();
 			writer.close();
-		} catch (IOException e) {
+		}catch(Exception e) {
 			e.printStackTrace();
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-			
 		}
 	}
 	
@@ -1084,7 +1033,7 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		}
 	}
 	
-	public void OpenresourceFile(String resource) throws Exception{
+	private void OpenresourceFile(String resource) {
 		pOthers = new Prism_Design_Others(driver);
 		if(supa!=null) {
 			supa.startMeasurement("OpenResource"+resource);
@@ -1092,31 +1041,15 @@ public class UIPerformanceBase extends Prism_Selenium_Loginlogout{
 		uiResponseTimes.add(1,pOthers.prism_selenium_openResource(resource,ENABLEJVMPROFILING));
 		if(supa!=null) {
 			try {
-				supa.stopMeasurement(1/*(uiResponseTimes.get(1))/1000+10*/);
+				supa.stopMeasurement(1);
 			}
 			catch (Exception e) {
-				throw new Exception(e.getMessage()+"\nProblem in Opening resource"+resource);
+				throw e;
 			}
 		}
 	}
 	
-	public void OpenresourceMessageMapping(String resource) throws Exception{
-		pOthers = new Prism_Design_Others(driver);
-		if(supa!=null) {
-			supa.startMeasurement("OPenMessageMapping"+resource);
-		}
-		uiResponseTimes.add(1,pOthers.prism_selenium_openMessageMapping(resource,ENABLEJVMPROFILING));
-		if(supa!=null) {
-			try {
-				supa.stopMeasurement((uiResponseTimes.get(1))/1000+10);
-			}
-			catch (Exception e) {
-				throw new Exception(e.getMessage()+"\nProblem in Opening Message Mapping"+resource);
-			}
-		}
-	}
-	
-	public void getErrorCount() {
+	void getErrorCount() {
 		System.out.println("Number of Iflows failed = "+errorCount+" \nNumberof Iflows failed completely = "+errorCount2);
 		System.out.println("Following Iflows had problems atleast once in either open, save or deploy\n");
 		for(String iflow: problemIflows) {

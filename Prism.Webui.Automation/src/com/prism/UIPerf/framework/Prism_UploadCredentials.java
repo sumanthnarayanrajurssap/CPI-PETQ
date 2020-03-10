@@ -1,22 +1,11 @@
 package com.prism.UIPerf.framework;
 
-import java.io.IOException;
-
-public class Prism_UploadCredentials {
+class Prism_UploadCredentials {
 	private String TargetName;
 	private String addCommand;
 	private String removeCommand;
-	public Prism_UploadCredentials(String UserName,String Password) {
-		if(UserName.contentEquals("P000008")) {
-			Password="Abcd1234";
-			UserName = "P1369096596";
-		}
-		else if(UserName.contentEquals("P000003")) {
-			Password="Abcd1234";
-			UserName = "P1941256996";
-		}
-		
-		else if(UserName.contentEquals("P000306")) {
+	Prism_UploadCredentials(String UserName,String Password) {
+		if(UserName.contentEquals("P000306")) {
 			Password="Abcd1234";
 			UserName = "P1369096596";
 		}
@@ -26,32 +15,24 @@ public class Prism_UploadCredentials {
 		this.removeCommand = "cmd /c cmdkey /delete:"+TargetName;
 	}
 
-	public void setCredentials() {
+	void setCredentials() {
 		Runtime rt = Runtime.getRuntime();
 		try {
 			Process pr = rt.exec(addCommand);
 			if(pr.waitFor()!=0)
 				pr.destroy();
-		}
-		catch (InterruptedException e2) {
-			e2.printStackTrace();
-		}
-		catch (IOException e) {
+		}catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void removeCredentials() {
+	void removeCredentials() {
 		Runtime rt = Runtime.getRuntime();
 		try {
 			Process pr = rt.exec(removeCommand);
 			if(pr.waitFor()!=0)
 				pr.destroy();
-		}
-		catch (InterruptedException e2) {
-			e2.printStackTrace();
-		}
-		catch (IOException e) {
+		}catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

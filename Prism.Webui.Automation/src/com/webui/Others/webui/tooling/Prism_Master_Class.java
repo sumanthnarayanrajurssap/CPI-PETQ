@@ -19,37 +19,17 @@ public
 			implements
 				PrismMasterClassXpathConstants{
 	
-	public WebDriver driver;
-	public Actions action;
-	
+	private WebDriver driver;
 	@FindBy(xpath=WORKSPACEWINDOW)
-	protected WebElement Workpsace_Window_Size;
+	private WebElement Workpsace_Window_Size;
 
 	public Prism_Master_Class(WebDriver driver) {
 		PageFactory.initElements(driver, this);
 		this.driver = driver;
-		action = new Actions(driver);
+		new Actions(driver);
 	}
 
 	public Prism_Master_Class() {
-	}
-	
-	public String prism_design_ReceiverElement(int xOffset,int yOffset){
-		prism_design_panelClick("Participants");
-		elementsizeClick(RECEIVER);
-		elementmove(Workpsace_Window_Size, xOffset, yOffset);
-	    WebElement generatedWebElement = null;
-		String createdReceiver = null;
-		String id= null;
-		try {
-			webdriver_wait(XPATHID, 1);
-			createdReceiver =driver.findElement(By.xpath(XPATHID)).getAttribute("value");
-			generatedWebElement = driver.findElement(By.xpath("//*[name()='g']//*[contains(@sap-automation,'"+createdReceiver+"')]"));
-			id=generatedWebElement.getAttribute("id");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return id;
 	}
 	
 	public void webdriver_wait(String xpath_wait, int time_out) {
@@ -94,13 +74,13 @@ public
 			List<WebElement> element = driver.findElements(By.xpath(xpath));
 			int elementSize = element.size();
 			if (elementSize > 1) {
-				element.get(elementSize - elementSize).click();
+				element.get(0).click();
 				sleep(100);
-				element.get(elementSize - elementSize).clear();
+				element.get(0).clear();
 				sleep(100);
-				element.get(elementSize - elementSize).sendKeys(values);
+				element.get(0).sendKeys(values);
 				sleep(500);
-				element.get(elementSize - elementSize).click();
+				element.get(0).click();
 				sleep(100);
 			} else {
 				webdriver_wait(xpath, 30);
@@ -114,7 +94,7 @@ public
 				sleep(100);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw e;
 		}
 	}
 
@@ -124,7 +104,7 @@ public
 			List<WebElement> element = driver.findElements(By.xpath(xpath));
 			int elementSize = element.size();
 			if (elementSize > 1) {
-				element.get(elementSize - elementSize).click();
+				element.get(0).click();
 			} else {
 				webdriver_wait(xpath, 100);
 				driver.findElement(By.xpath(xpath)).click();
@@ -134,73 +114,11 @@ public
 		}
 	}
 	
-	public void elementmove(WebElement element, int x, int y){
-        try {
-               webdriver_webelement_wait(element, 10);
-               action.moveToElement(element).moveByOffset(-element.getSize().getWidth()/2 + x, -element.getSize().getHeight()/2 + y).clickAndHold().release().build().perform();
-        } catch (Exception e) {
-               throw e;
-        }
-	}
-
-	public void prism_design_panelClick(String panel){
-		String xpath = "//*[@class='modToolbar']//child::li[@title='"+panel+"']";
-		waitforLoadingwebpage(2);
-		decreaseparameterwindowSize();
-		waitforLoadingwebpage(2);
-		try {
-			sleep(100);
-			webdriver_wait(xpath, 10);
-			List<WebElement> element = driver.findElements(By.xpath(xpath));
-			int elementSize = element.size();
-			if (elementSize > 1) {
-				element.get(elementSize - elementSize).click();
-			} else {
-				webdriver_wait(xpath, 5);
-				driver.findElement(By.xpath(xpath)).click();
-			}
-		} catch (Exception e) {
-			throw e;
-		}
-	}
-	
-	 public void decreaseparameterwindowSize(){
-		 elementsizeClick(PARAMETERMINIMIZE);
-	 }
-	 
-	 public void increaseparameterwindowSize(){
+	public void increaseparameterwindowSize(){
 		 elementsizeClick(PARAMETERMAXIMIZE);
 	 }
 	 
-	 public void waitforMessageMappingLoading(){
-				FluentWait<WebDriver> wait = new FluentWait<WebDriver>(driver)
-						.withTimeout(Duration.ofSeconds(60))
-						.pollingEvery(Duration.ofSeconds(1))
-						.ignoring(Exception.class);
-				wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath(WAITFORMAPPING)));
-	 }
-	 
-	public void waitforLoadingwebpage(){
-			FluentWait<WebDriver> wait = 
-					new FluentWait<WebDriver>(driver)
-					.withTimeout(Duration.ofSeconds(100))
-					.pollingEvery(Duration.ofMillis(1000))
-					.ignoring(Exception.class);
-			wait.until(
-					ExpectedConditions
-					.invisibilityOfElementLocated(
-							By.xpath(WAITFORPAGELOADING)));
-	 	}
-	 
-		public void waitforLoadingwebpage(int timeout){
-				FluentWait<WebDriver> wait = new FluentWait<WebDriver>(driver)
-						.withTimeout(Duration.ofSeconds(timeout))
-						.pollingEvery(Duration.ofMillis(1000))
-						.ignoring(Exception.class);
-				wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath(WAITFORPAGELOADING)));
-		 	}
-	 
-	 public void waitforDesignPage(){
+		public void waitforDesignPage(){
 			 FluentWait<WebDriver> wait = new FluentWait<WebDriver>(driver)
 						.withTimeout(Duration.ofSeconds(100))
 						.pollingEvery(Duration.ofMillis(100))
@@ -214,18 +132,15 @@ public
 
 		 public void waitforUiLoad(){
 			 FluentWait<WebDriver> wait = new FluentWait<WebDriver>(driver)
-						.withTimeout(Duration.ofMillis(UIPerfConstants.timeout*1000))
+						.withTimeout(Duration.ofSeconds(UIPerfConstants.timeout))
 						.pollingEvery(Duration.ofMillis(100))
 						.ignoring(Throwable.class);
-			        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("//*[@id='operationBusyDialog-Dialog']")));
-			        /*wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(xpath)));
-			        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpath)));
-			        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(xpath)));*/
+			        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath(BUSYDIALOGUE)));
 		 }
 		 
-		 public void waitUntilElementIsInvisble(String xpath) {
+		 private void waitUntilElementIsInvisble(String xpath) {
 				 FluentWait<WebDriver> wait = new FluentWait<WebDriver>(driver)
-							.withTimeout(Duration.ofMillis(UIPerfConstants.timeout*1000))
+							.withTimeout(Duration.ofSeconds(UIPerfConstants.timeout))
 							.pollingEvery(Duration.ofMillis(100))
 							.ignoring(Throwable.class);
 				        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath(xpath)));
